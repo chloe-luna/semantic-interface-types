@@ -1,0 +1,119 @@
+-- DNS Query Type (what comes in)
+data DNSQuery = DNSQuery
+  { queryName :: DomainName
+  , queryType :: QueryType  
+  , queryClass :: DNSClass
+  }
+
+data QueryType
+  = A          -- IPv4 address
+  | AAAA       -- IPv6 address
+  | CNAME      -- Canonical name
+  | MX         -- Mail exchange
+  | NS         -- Name server
+  | TXT        -- Text record
+  | SRV        -- Service record
+  | SOA        -- Start of authority
+  | PTR        -- Pointer record
+  | CERT       -- Certificate record
+  | LOC        -- Location record
+  | NAPTR      -- Naming authority pointer
+  | ANY        -- Any record type
+  | AXFR       -- Zone transfer
+  | CustomQuery Text
+
+data DNSClass = Internet | Chaos | Hesiod | CustomClass Int
+
+-- DNS Response Type (what goes out per spec)
+data DNS = DNS
+  { header :: DNSHeader
+  , questions :: [DNSQuestion]
+  , answers :: [DNSAnswer]
+  , authority :: [DNSAnswer] 
+  , additional :: [DNSAnswer]
+  }
+
+data DNSHeader = DNSHeader
+  { transactionId :: TransactionID
+  , flags :: DNSFlags
+  , questionCount :: Count
+  , answerCount :: Count
+  , authorityCount :: Count
+  , additionalCount :: Count
+  }
+
+data DNSFlags = DNSFlags
+  { isResponse :: Bool          -- QR bit
+  , opcode :: Opcode           -- Operation code
+  , isAuthoritative :: Bool    -- AA bit
+  , isTruncated :: Bool        -- TC bit  
+  , isRecursionDesired :: Bool -- RD bit
+  , isRecursionAvailable :: Bool -- RA bit
+  , responseCode :: ResponseCode -- RCODE
+  }
+
+data Opcode = Query | IQuery | Status | CustomOpcode Int
+
+data ResponseCode 
+  = NoError      -- 0: No error
+  | FormatError  -- 1: Format error
+  | ServerFailure -- 2: Server failure
+  | NameError    -- 3: Name error (NXDOMAIN)
+  | NotImplemented -- 4: Not implemented
+  | Refused      -- 5: Refused
+  | CustomError Int
+
+data DNSQuestion = DNSQuestion
+  { questionName :: DomainName
+  , questionType :: QueryType
+  , questionClass :: DNSClass
+  }
+
+data DNSAnswer = DNSAnswer
+  { answerName :: DomainName
+  , answerType :: QueryType
+  , answerClass :: DNSClass
+  , answerTTL :: TimeInterval
+  , answerData :: AnswerData
+  }
+
+data AnswerData
+  = AddressData IPv4Address
+  | IPv6Data IPv6Address
+  | NameData DomainName        -- For CNAME, NS, PTR
+  | MailData Priority DomainName -- For MX
+  | TextData [TextString]      -- For TXT
+  | ServiceData Priority Weight Port DomainName -- For SRV
+  | SOAData DomainName DomainName Serial TimeInterval TimeInterval TimeInterval TimeInterval
+  | CertData CertificateType KeyTag Algorithm CertificateData
+  | LocationData Latitude Longitude Altitude Precision
+  | NAPTRData Order Preference Flags Services Regexp Replacement
+  | RawData ByteString         -- For unknown/custom record types
+
+-- Type aliases for protocol types
+type TransactionID = Int
+type Count = Int
+type DomainName = String
+type IPv4Address = String
+type IPv6Address = String
+type TextString = String
+type ByteString = String
+type TimeInterval = Int
+type Priority = Int
+type Weight = Int
+type Port = Int
+type Serial = Int
+type KeyTag = Int
+type Algorithm = Int
+type CertificateType = Int
+type CertificateData = String
+type Latitude = Double
+type Longitude = Double  
+type Altitude = Double
+type Precision = Double
+type Order = Int
+type Preference = Int
+type Flags = String
+type Services = String
+type Regexp = String
+type Replacement = String
